@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { Loader2, Zap } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import type { AuthError } from '@supabase/supabase-js'
 
 import { createClient } from '@/lib/supabase/client'
@@ -70,8 +70,11 @@ export default function LoginPage() {
 
         {/* Logo */}
         <Link href="/" className="relative z-10 flex items-center gap-2.5">
-          <div className="h-8 w-8 rounded-lg bg-brand-success flex items-center justify-center shadow-[0_2px_8px_rgba(15,100,67,0.5)]">
-            <Zap className="h-4 w-4 text-white fill-white" />
+          <div className="grid grid-cols-2 gap-0.5 w-6 h-6 items-center justify-center">
+            <div className="w-2.5 h-2.5 rounded-full bg-brand-success" />
+            <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
+            <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
           </div>
           <span className="font-bold text-lg text-white tracking-tight">AdDesk</span>
         </Link>
@@ -108,8 +111,11 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden flex items-center gap-2 mb-10 justify-center">
-            <div className="h-8 w-8 rounded-lg bg-brand-success flex items-center justify-center shadow-[0_2px_8px_rgba(15,100,67,0.4)]">
-              <Zap className="h-4 w-4 text-white fill-white" />
+            <div className="grid grid-cols-2 gap-0.5 w-6 h-6 items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-full bg-brand-success" />
+              <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
+              <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
+              <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
             </div>
             <span className="font-bold text-xl text-text-primary">AdDesk</span>
           </Link>

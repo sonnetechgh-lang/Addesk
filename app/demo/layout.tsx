@@ -21,7 +21,10 @@ export default function DemoLayout({ children }: { children: React.ReactNode }) 
         </span>
         <span className="text-white/60 hidden sm:inline">—</span>
         <span className="text-white/60 hidden sm:inline">This is sample data. No real account required.</span>
-        <Link href="/signup" className="ml-3 px-3 py-1 rounded-full bg-brand-success text-white text-[12px] font-bold hover:bg-brand-success-light transition-colors">
+        <Link href="/" className="ml-3 px-3 py-1 rounded-full bg-white/15 text-white text-[12px] font-bold hover:bg-white/25 transition-colors">
+          Back to homepage
+        </Link>
+        <Link href="/signup" className="px-3 py-1 rounded-full bg-brand-success text-white text-[12px] font-bold hover:bg-brand-success-light transition-colors">
           Sign up free
         </Link>
       </div>
