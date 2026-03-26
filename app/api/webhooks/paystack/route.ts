@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     
     // Extract our custom fields defined in the checkout frontend
     const getField = (variableName: string) => {
-      const field = customFields.find((f: any) => f.variable_name === variableName)
+      const field = customFields.find((f: { variable_name: string; value: string }) => f.variable_name === variableName)
       return field ? field.value : null
     }
 
@@ -104,8 +104,8 @@ export async function POST(req: NextRequest) {
     let supabaseAdmin;
     try {
       supabaseAdmin = createAdminClient()
-    } catch (envError: any) {
-      console.error('CRITICAL: Failed to create admin Supabase client. Is SUPABASE_SERVICE_ROLE_KEY set?', envError.message)
+    } catch (envError) {
+      console.error('CRITICAL: Failed to create admin Supabase client. Is SUPABASE_SERVICE_ROLE_KEY set?', envError instanceof Error ? envError.message : envError)
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
     
@@ -212,7 +212,7 @@ export async function POST(req: NextRequest) {
     
     return NextResponse.json({ received: true, orderId: newOrder.id })
     
-  } catch (err: any) {
+  } catch (err) {
     console.error('Webhook Error:', err)
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
