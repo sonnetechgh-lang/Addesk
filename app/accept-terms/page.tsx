@@ -2,11 +2,11 @@
 
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { ShieldCheck, ArrowRight, Loader2, AlertCircle, Zap } from "lucide-react"
+import { ShieldCheck, ArrowRight, Loader2, AlertCircle } from "lucide-react"
 import { acceptInfluencerTerms } from "@/app/actions/consent"
 import Link from "next/link"
 
-export default function TermsOnboardingPage() {
+export default function AcceptTermsPage() {
   const router = useRouter()
   const [accepted, setAccepted] = useState(false)
   const [loading, setLoading] = useState(false)
@@ -30,7 +30,7 @@ export default function TermsOnboardingPage() {
         setError(result.error || "Failed to accept terms.")
         setLoading(false)
       }
-    } catch (err) {
+    } catch {
       setError("An unexpected error occurred.")
       setLoading(false)
     }
@@ -41,8 +41,11 @@ export default function TermsOnboardingPage() {
 
       {/* Logo */}
       <div className="flex items-center gap-2.5 mb-8">
-        <div className="h-9 w-9 rounded-xl bg-[#0f6443] flex items-center justify-center shadow-sm">
-          <Zap className="h-4.5 w-4.5 text-white fill-white" />
+        <div className="grid grid-cols-2 gap-0.5 w-6 h-6 items-center justify-center">
+          <div className="w-2.5 h-2.5 rounded-full bg-brand-primary" />
+          <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
+          <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
+          <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
         </div>
         <span className="font-bold text-xl text-text-primary tracking-tight">AdDesk</span>
       </div>
@@ -58,8 +61,8 @@ export default function TermsOnboardingPage() {
           We&apos;ve updated our Terms of Service. Please review and accept them to access your AdDesk dashboard.
         </p>
 
-        {/* Terms Preview Box */}
-        <div className="bg-surface-light border border-border rounded-2xl p-4 sm:p-6 h-48 sm:h-64 overflow-y-auto mb-6 sm:mb-8 relative">
+        {/* Full Terms Display */}
+        <div className="bg-surface-light border border-border rounded-2xl p-4 sm:p-6 mb-6 sm:mb-8">
            <div className="prose prose-sm text-text-secondary max-w-none">
              <h3 className="text-text-primary font-bold text-base">1. Welcome to AdDesk</h3>
              <p>By using the AdDesk platform, you agree to comply with our Terms of Service. These terms outline your responsibilities as a Creator on our platform.</p>
@@ -72,12 +75,21 @@ export default function TermsOnboardingPage() {
 
              <h3 className="text-text-primary font-bold text-base">4. Liability</h3>
              <p>AdDesk is a facilitator of sponsorships. We do not take responsibility for the direct outcomes of the advertisements provided, or breaches of contract by external clients.</p>
-             
-             <p>...</p>
+
+             <h3 className="text-text-primary font-bold text-base">5. Data Privacy</h3>
+             <p>Your personal data is handled in accordance with our Privacy Policy. We are committed to protecting your information and maintaining transparency in how it is used.</p>
+
+             <h3 className="text-text-primary font-bold text-base">6. Account Termination</h3>
+             <p>AdDesk reserves the right to suspend or terminate accounts that violate these terms, engage in fraudulent activity, or breach any applicable laws.</p>
+
+             <h3 className="text-text-primary font-bold text-base">7. Changes to Terms</h3>
+             <p>We may update these terms from time to time. You will be notified of material changes and asked to re-accept the updated terms before continuing to use the platform.</p>
            </div>
-           
-           <div className="absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-surface-light to-transparent pointer-events-none rounded-b-2xl" />
         </div>
+
+        <p className="text-xs text-text-secondary mb-4">
+          Read the full <Link href="/terms" target="_blank" className="text-brand-success hover:text-brand-success/80 font-semibold transition-colors underline underline-offset-2">Terms of Service</Link> and <Link href="/privacy" target="_blank" className="text-brand-success hover:text-brand-success/80 font-semibold transition-colors underline underline-offset-2">Privacy Policy</Link>.
+        </p>
 
         {/* Checkbox + Button */}
         <div className="flex flex-col gap-4 sm:gap-5">

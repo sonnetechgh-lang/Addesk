@@ -29,7 +29,7 @@ export default async function DashboardLayout({
     .single()
 
   if (!consent || consent.terms_version !== CURRENT_TERMS_VERSION) {
-    redirect("/onboarding/terms")
+    redirect("/accept-terms")
   }
 
   const initials = profile?.full_name

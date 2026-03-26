@@ -37,28 +37,26 @@ export async function acceptInfluencerTerms() {
     return { success: false, error: 'Failed to record consent' }
   }
 
-  // Attempt to send email (don't block on this if it fails)
+  // Fire-and-forget email — don't block the response
   if (user.email && resend) {
-    try {
-      await resend.emails.send({
-        from: 'AdDesk <no-reply@addesk.io>',
-        to: user.email,
-        subject: 'Terms of Service Accepted - AdDesk',
-        html: `
-          <div style="font-family: sans-serif; padding: 20px;">
-            <h2>Terms of Service Accepted</h2>
-            <p>Hi there,</p>
-            <p>This email confirms that you accepted the AdDesk Terms of Service (version ${CURRENT_TERMS_VERSION}) on ${new Date().toUTCString()}.</p>
-            <p>Your IP: ${ip_address}</p>
-            <p>If this wasn't you, please contact support immediately.</p>
-            <br/>
-            <p>The AdDesk Team</p>
-          </div>
-        `,
-      })
-    } catch (e) {
+    resend.emails.send({
+      from: 'AdDesk <no-reply@addesk.io>',
+      to: user.email,
+      subject: 'Terms of Service Accepted - AdDesk',
+      html: `
+        <div style="font-family: sans-serif; padding: 20px;">
+          <h2>Terms of Service Accepted</h2>
+          <p>Hi there,</p>
+          <p>This email confirms that you accepted the AdDesk Terms of Service (version ${CURRENT_TERMS_VERSION}) on ${new Date().toUTCString()}.</p>
+          <p>Your IP: ${ip_address}</p>
+          <p>If this wasn't you, please contact support immediately.</p>
+          <br/>
+          <p>The AdDesk Team</p>
+        </div>
+      `,
+    }).catch((e) => {
       console.error('Failed to send confirmation email', e)
-    }
+    })
   }
 
   return { success: true }
