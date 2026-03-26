@@ -55,7 +55,7 @@ export default function SignupPage() {
           data: {
             full_name: values.fullName,
           },
-          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/dashboard`,
+          emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/auth/callback`,
         }
       })
       
