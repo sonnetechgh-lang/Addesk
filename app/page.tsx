@@ -76,6 +76,11 @@ export default function Home() {
                   Start creating free
                 </Button>
               </Link>
+              <Link href="/demo">
+                <Button size="lg" variant="secondary">
+                  Try demo
+                </Button>
+              </Link>
               <Link href="#features">
                 <Button size="lg" variant="secondary">
                   Learn more
