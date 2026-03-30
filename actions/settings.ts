@@ -63,7 +63,7 @@ export async function updateProfileSettings(formData: FormData) {
     .eq('id', user.id)
 
   if (error) {
-    console.error('Update settings profile error:', error)
+    console.error('Update settings profile error:', error.message)
     return { error: 'Failed to update profile' }
   }
 
@@ -77,7 +77,13 @@ const payoutSchema = z.object({
   accountName: z.string().min(2, 'Account name is required'),
 })
 
-export async function updatePayoutSettings(values: z.infer<typeof payoutSchema>) {
+export async function updatePayoutSettings(rawValues: z.infer<typeof payoutSchema>) {
+  const validatedFields = payoutSchema.safeParse(rawValues)
+  if (!validatedFields.success) {
+    return { error: 'Invalid fields', details: validatedFields.error.flatten().fieldErrors }
+  }
+  const values = validatedFields.data
+
   const supabase = await createClient()
   
   const { data: { user } } = await supabase.auth.getUser()
@@ -120,31 +126,36 @@ export async function updatePayoutSettings(values: z.infer<typeof payoutSchema>)
     const paystackData = await paystackRes.json()
 
     if (!paystackRes.ok || !paystackData.status) {
-      console.error('Paystack subaccount error:', paystackData)
+      console.error('Paystack subaccount error:', JSON.stringify(paystackData))
       return { error: 'Failed to update payment account. Please check your bank details and try again.' }
     }
 
-    // 2. If it was a new subaccount, we MUST save the code to the DB
-    if (isNew) {
-      const subaccountCode = paystackData.data.subaccount_code
-      const { error: updateError } = await supabase
-        .from('profiles')
-        .update({
-          paystack_subaccount_code: subaccountCode,
-          is_onboarded: true, // Mark them as fully onboarded if they weren't
-        })
-        .eq('id', user.id)
+    // 2. Save payout details and subaccount code to the DB
+    const updatePayload: Record<string, string | boolean> = {
+      payout_bank_code: values.bankCode,
+      payout_account_number: values.accountNumber,
+      payout_account_name: values.accountName,
+    }
 
-      if (updateError) {
-        console.error('Database subaccount update error:', updateError)
-        return { error: 'Paystack account created, but failed to update local profile. Please contact support.' }
-      }
+    if (isNew) {
+      updatePayload.paystack_subaccount_code = paystackData.data.subaccount_code
+      updatePayload.is_onboarded = true
+    }
+
+    const { error: updateError } = await supabase
+      .from('profiles')
+      .update(updatePayload)
+      .eq('id', user.id)
+
+    if (updateError) {
+      console.error('Database subaccount update error:', updateError.message)
+      return { error: 'Paystack account updated, but failed to save details locally. Please contact support.' }
     }
     
     revalidatePath('/dashboard/settings')
     return { success: true }
-  } catch (err: any) {
-    console.error('Payout update unexpected error:', err)
+  } catch (err: unknown) {
+    console.error('Payout update unexpected error:', err instanceof Error ? err.message : String(err))
     return { error: 'Internal server error' }
   }
 }
@@ -182,7 +193,7 @@ export async function uploadProfilePhoto(formData: FormData) {
     .upload(filePath, file, { upsert: true })
 
   if (uploadError) {
-    console.error('Avatar upload error:', uploadError)
+    console.error('Avatar upload error:', uploadError.message)
     return { error: 'Failed to upload image' }
   }
 
@@ -198,7 +209,7 @@ export async function uploadProfilePhoto(formData: FormData) {
     .eq('id', user.id)
 
   if (updateError) {
-    console.error('Profile photo URL update error:', updateError)
+    console.error('Profile photo URL update error:', updateError.message)
     return { error: 'Image uploaded but failed to update profile' }
   }
 

@@ -66,7 +66,7 @@ export async function createShipment(formData: FormData) {
     })
 
   if (insertErr) {
-    console.error('Create shipment error:', insertErr)
+    console.error('Create shipment error:', insertErr.message)
     return { error: 'Failed to create shipment record' }
   }
 
@@ -121,7 +121,7 @@ export async function updateShipmentStatus(formData: FormData) {
     .eq('id', orderId)
 
   if (error) {
-    console.error('Update shipment status error:', error)
+    console.error('Update shipment status error:', error.message)
     return { error: 'Failed to update status' }
   }
 

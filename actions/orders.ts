@@ -47,7 +47,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
     .eq('id', orderId)
 
   if (updateError) {
-    console.error('Failed to update order status:', updateError)
+    console.error('Failed to update order status:', updateError.message)
     return { error: 'Failed to update order status' }
   }
 

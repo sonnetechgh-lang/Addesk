@@ -6,9 +6,10 @@ import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { Loader2, ArrowLeft, ShieldCheck, ImagePlus, X, AlertCircle, MapPin, Calendar, Package, Monitor } from 'lucide-react'
+import { Loader2, ArrowLeft, ShieldCheck, ImagePlus, X, AlertCircle, MapPin, Calendar, Package, Monitor, Phone, Instagram } from 'lucide-react'
 import { use } from 'react'
 import dynamic from 'next/dynamic'
+import Image from 'next/image'
 
 import { logClientConsent } from '@/app/actions/consent'
 import { createClient } from '@/lib/supabase/client'
@@ -33,6 +34,10 @@ const PaystackButton = dynamic(() => import('@/components/payment/PaystackButton
 const checkoutSchema = z.object({
   clientName: z.string().min(2, 'Name must be at least 2 characters'),
   clientEmail: z.string().email('Valid email is required').min(5, 'Email is required'),
+  clientPhone: z.string().min(10, 'Phone number must be at least 10 digits').regex(/^[0-9+\-\s()]+$/, 'Enter a valid phone number'),
+  clientInstagram: z.string().optional(),
+  clientTiktok: z.string().optional(),
+  clientTwitter: z.string().optional(),
   brief: z.string().min(10, 'Brief must be at least 10 characters').max(2000, 'Brief must be under 2000 characters'),
   // Delivery fields (conditionally required via refinement)
   deliveryType: z.enum(['digital', 'physical', 'on_premise']),
@@ -76,8 +81,8 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
   
   const [isLoading, setIsLoading] = useState(true)
   const [pageError, setPageError] = useState<string | null>(null)
-  const [profile, setProfile] = useState<any>(null)
-  const [pkg, setPkg] = useState<any>(null)
+  const [profile, setProfile] = useState<{ id: string; full_name: string; paystack_subaccount_code: string; is_onboarded: boolean } | null>(null)
+  const [pkg, setPkg] = useState<{ id: string; title: string; description?: string; price: number; delivery_days: number; requires_physical_delivery?: boolean; requires_on_premise?: boolean } | null>(null)
   
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [formError, setFormError] = useState<string | null>(null)
@@ -149,6 +154,10 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
     defaultValues: {
       clientName: '',
       clientEmail: '',
+      clientPhone: '',
+      clientInstagram: '',
+      clientTiktok: '',
+      clientTwitter: '',
       brief: '',
       deliveryType: 'digital',
       street: '',
@@ -248,16 +257,17 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
       }
 
       // Log client consent to the database via Server Action
-      const consentResult = await logClientConsent(profile.id, values.clientEmail)
+      if (!profile) throw new Error('Profile not loaded')
+      const consentResult = await logClientConsent(profile!.id, values.clientEmail)
       if (!consentResult.success) {
         throw new Error(consentResult.error || "Failed to record consent")
       }
 
       // Lock the form and reveal the Paystack button
       setIsFormLocked(true)
-    } catch (err: any) {
+    } catch (err: unknown) {
       setIsUploadingImages(false)
-      setFormError(err.message || 'Failed to upload images. Please try again.')
+      setFormError(err instanceof Error ? err.message : 'Failed to upload images. Please try again.')
     } finally {
       setIsSubmitting(false)
     }
@@ -297,13 +307,19 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
     )
   }
 
+  if (!profile || !pkg) return null
+
+  // Narrowed non-null references for TypeScript
+  const safeProfile = profile
+  const safePkg = pkg
+
   return (
     <div className="min-h-screen bg-surface-light font-sans text-text-primary">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-12 lg:py-20">
         
         <div className="mb-8">
           <Link href={`/book/${username}`} className="inline-flex items-center gap-2 text-sm font-medium text-text-secondary hover:text-brand-success transition-colors">
-            <ArrowLeft className="h-4 w-4" /> Back to {profile.full_name}'s Profile
+            <ArrowLeft className="h-4 w-4" /> Back to {safeProfile.full_name}&apos;s Profile
           </Link>
         </div>
 
@@ -313,21 +329,21 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
           <div className="lg:col-span-5 space-y-10">
             <div>
               <h1 className="text-4xl lg:text-5xl font-display font-bold text-brand-secondary mb-4 tracking-tight">Complete your Booking</h1>
-              <p className="text-text-secondary text-lg leading-relaxed">You're booking a service with <span className="font-semibold text-brand-secondary">{profile.full_name}</span>. Fill out the brief and proceed to secure payment.</p>
+              <p className="text-text-secondary text-lg leading-relaxed">You&apos;re booking a service with <span className="font-semibold text-brand-secondary">{safeProfile.full_name}</span>. Fill out the brief and proceed to secure payment.</p>
             </div>
             
             <div className="bg-white rounded-3xl p-8 border border-border shadow-sm">
               <h3 className="font-bold text-xs uppercase tracking-widest text-text-secondary mb-6">Order Summary</h3>
               <div className="pb-6 border-b border-border">
-                <h2 className="text-2xl font-display font-bold text-brand-secondary leading-tight">{pkg.title}</h2>
-                {pkg.description && (
-                  <p className="mt-3 text-text-secondary text-sm line-clamp-3 leading-relaxed">{pkg.description}</p>
+                <h2 className="text-2xl font-display font-bold text-brand-secondary leading-tight">{safePkg.title}</h2>
+                {safePkg.description && (
+                  <p className="mt-3 text-text-secondary text-sm line-clamp-3 leading-relaxed">{safePkg.description}</p>
                 )}
               </div>
               <div className="pt-6 space-y-5">
                 <div className="flex justify-between items-center text-sm font-medium">
                   <span className="text-text-secondary">Expected Delivery</span>
-                  <span className="text-brand-secondary font-bold bg-muted px-3 py-1 rounded-md">{pkg.delivery_days} Days</span>
+                  <span className="text-brand-secondary font-bold bg-muted px-3 py-1 rounded-md">{safePkg.delivery_days} Days</span>
                 </div>
                 <div className="flex justify-between items-center text-sm font-medium">
                   <span className="text-text-secondary">Platform Fee</span>
@@ -336,7 +352,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
               </div>
               <div className="mt-8 pt-6 border-t border-border flex justify-between items-end">
                 <span className="font-bold text-text-secondary mb-1">Total Amount</span>
-                <span className="text-4xl font-display font-bold text-brand-secondary">GHS {(pkg.price / 100).toFixed(2)}</span>
+                <span className="text-4xl font-display font-bold text-brand-secondary">GHS {(safePkg.price / 100).toFixed(2)}</span>
               </div>
             </div>
           </div>
@@ -380,6 +396,75 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
 
                   <FormField
                     control={form.control}
+                    name="clientPhone"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Mobile Number</FormLabel>
+                        <FormControl>
+                          <div className="relative">
+                            <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                            <Input placeholder="+233 54 XXX XXXX" className="pl-10" {...field} disabled={isFormLocked} />
+                          </div>
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  {/* Client Social Media Handles */}
+                  <div className="space-y-4">
+                    <label className="text-sm font-medium text-text-primary">Social Media Handles <span className="text-text-muted font-normal">(optional)</span></label>
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                      <FormField
+                        control={form.control}
+                        name="clientInstagram"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="relative">
+                                <Instagram className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" />
+                                <Input placeholder="@instagram" className="pl-10" {...field} disabled={isFormLocked} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="clientTiktok"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="relative">
+                                <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-text-muted text-xs font-bold">TT</span>
+                                <Input placeholder="@tiktok" className="pl-10" {...field} disabled={isFormLocked} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                      <FormField
+                        control={form.control}
+                        name="clientTwitter"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormControl>
+                              <div className="relative">
+                                <svg className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-text-muted" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                                <Input placeholder="@x" className="pl-10" {...field} disabled={isFormLocked} />
+                              </div>
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+                  </div>
+
+                  <FormField
+                    control={form.control}
                     name="brief"
                     render={({ field }) => (
                       <FormItem className="pt-2">
@@ -398,7 +483,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                   />
 
                   {/* Delivery Type Selector */}
-                  {(pkg.requires_physical_delivery || pkg.requires_on_premise) && (
+                  {(safePkg.requires_physical_delivery || safePkg.requires_on_premise) && (
                     <div className="space-y-4 pt-2">
                       <label className="text-sm font-medium text-text-primary">Delivery Method</label>
                       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -416,7 +501,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                           <span className="text-sm font-semibold">Digital</span>
                           <span className="text-[11px] text-text-muted">Delivered online</span>
                         </button>
-                        {pkg.requires_physical_delivery && (
+                        {safePkg.requires_physical_delivery && (
                           <button
                             type="button"
                             onClick={() => form.setValue('deliveryType', 'physical')}
@@ -432,7 +517,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                             <span className="text-[11px] text-text-muted">Ship a product</span>
                           </button>
                         )}
-                        {pkg.requires_on_premise && (
+                        {safePkg.requires_on_premise && (
                           <button
                             type="button"
                             onClick={() => form.setValue('deliveryType', 'on_premise')}
@@ -545,7 +630,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                         <div className="grid grid-cols-3 sm:grid-cols-5 gap-2">
                           {imagePreviewUrls.map((url, idx) => (
                             <div key={idx} className="relative aspect-square rounded-xl overflow-hidden group border border-border">
-                              <img src={url} alt={`Upload ${idx + 1}`} className="w-full h-full object-cover" />
+                              <Image src={url} alt={`Upload ${idx + 1}`} fill className="object-cover" unoptimized />
                               <button
                                 type="button"
                                 onClick={() => removeImage(idx)}
@@ -606,8 +691,8 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                       <p className="text-[12px] font-semibold text-text-muted uppercase tracking-widest">Attached Images</p>
                       <div className="grid grid-cols-5 gap-2">
                         {uploadedImageUrls.map((url, idx) => (
-                          <div key={idx} className="aspect-square rounded-xl overflow-hidden border border-border">
-                            <img src={url} alt={`Asset ${idx + 1}`} className="w-full h-full object-cover" />
+                          <div key={idx} className="relative aspect-square rounded-xl overflow-hidden border border-border">
+                            <Image src={url} alt={`Asset ${idx + 1}`} fill className="object-cover" unoptimized />
                           </div>
                         ))}
                       </div>
@@ -668,12 +753,16 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
                           </div>
                         </div>
                         <PaystackButton
-                          amount={pkg.price}
+                          amount={safePkg.price}
                           email={form.getValues('clientEmail')}
-                          subaccountCode={profile.paystack_subaccount_code}
-                          influencerId={profile.id}
-                          packageId={pkg.id}
+                          subaccountCode={safeProfile.paystack_subaccount_code}
+                          influencerId={safeProfile.id}
+                          packageId={safePkg.id}
                           clientName={form.getValues('clientName')}
+                          clientPhone={form.getValues('clientPhone')}
+                          clientInstagram={form.getValues('clientInstagram') || ''}
+                          clientTiktok={form.getValues('clientTiktok') || ''}
+                          clientTwitter={form.getValues('clientTwitter') || ''}
                           brief={form.getValues('brief')}
                           briefImageUrls={uploadedImageUrls}
                           isSubmitting={isSubmitting}

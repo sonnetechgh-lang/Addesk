@@ -16,6 +16,9 @@ create table public.profiles (
   tiktok_handle text,
   twitter_handle text,
   paystack_subaccount_code text,
+  payout_bank_code text,
+  payout_account_number text,
+  payout_account_name text,
   is_onboarded boolean default false,
   created_at timestamptz default now()
 );
@@ -77,11 +80,15 @@ create table public.orders (
   client_name text not null,
   client_email text not null,
   client_phone text,
+  client_instagram text,
+  client_tiktok text,
+  client_twitter text,
   client_business_name text not null,
   product_description text not null,
   target_audience text,
   preferred_dates text,
   asset_urls text[], -- Supabase Storage URLs
+  brief_image_urls text[] default '{}', -- Brief reference images from checkout
   influencer_id uuid references public.profiles(id) not null,
   package_id uuid references public.packages(id) not null,
   amount integer not null, -- total in pesewas
@@ -119,6 +126,10 @@ insert into storage.buckets (id, name, public)
 values ('orders', 'orders', true)
 on conflict do nothing;
 
+insert into storage.buckets (id, name, public) 
+values ('brief-assets', 'brief-assets', true)
+on conflict do nothing;
+
 -- Storage RLS: Avatars
 create policy "Avatar images are publicly accessible." 
   on storage.objects for select using (bucket_id = 'avatars');
@@ -132,6 +143,13 @@ create policy "Order assets are publicly accessible."
 
 create policy "Anyone can upload order assets." 
   on storage.objects for insert with check (bucket_id = 'orders');
+
+-- Storage RLS: Brief Assets (Client Uploads via public checkout)
+create policy "Brief assets are publicly accessible." 
+  on storage.objects for select using (bucket_id = 'brief-assets');
+
+create policy "Anyone can upload brief assets." 
+  on storage.objects for insert with check (bucket_id = 'brief-assets');
 
 
 -- 5. Trigger for new auth users

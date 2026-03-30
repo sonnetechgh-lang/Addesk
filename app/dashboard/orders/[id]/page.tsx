@@ -13,7 +13,9 @@ import {
   Package,
   MapPin,
   Calendar,
-  Truck
+  Truck,
+  Phone,
+  Instagram
 } from "lucide-react"
 import OrderStatusControl from '@/components/dashboard/OrderStatusControl'
 
@@ -78,7 +80,42 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   {order.client_email}
                 </a>
               </div>
+              {(order as any).client_phone && (
+                <div>
+                  <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-1 block">Phone</label>
+                  <a href={`tel:${(order as any).client_phone}`} className="text-text-primary font-medium text-[14px] flex items-center gap-1.5 hover:text-brand-success transition-colors">
+                    <Phone className="h-3.5 w-3.5 text-text-muted" />
+                    {(order as any).client_phone}
+                  </a>
+                </div>
+              )}
             </div>
+            {/* Client Social Handles */}
+            {((order as any).client_instagram || (order as any).client_tiktok || (order as any).client_twitter) && (
+              <div className="mt-5 pt-5 border-t border-border">
+                <label className="text-[10px] font-bold text-text-muted uppercase tracking-wider mb-3 block">Social Media</label>
+                <div className="flex flex-wrap gap-2">
+                  {(order as any).client_instagram && (
+                    <a href={`https://instagram.com/${(order as any).client_instagram.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-light border border-border text-[13px] font-medium text-text-secondary hover:text-brand-success hover:border-brand-success/30 transition-colors">
+                      <Instagram className="h-3.5 w-3.5" />
+                      {(order as any).client_instagram}
+                    </a>
+                  )}
+                  {(order as any).client_tiktok && (
+                    <a href={`https://tiktok.com/@${(order as any).client_tiktok.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-light border border-border text-[13px] font-medium text-text-secondary hover:text-brand-success hover:border-brand-success/30 transition-colors">
+                      <span className="text-[10px] font-bold">TT</span>
+                      {(order as any).client_tiktok}
+                    </a>
+                  )}
+                  {(order as any).client_twitter && (
+                    <a href={`https://x.com/${(order as any).client_twitter.replace('@', '')}`} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-light border border-border text-[13px] font-medium text-text-secondary hover:text-brand-success hover:border-brand-success/30 transition-colors">
+                      <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="currentColor"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                      {(order as any).client_twitter}
+                    </a>
+                  )}
+                </div>
+              </div>
+            )}
           </section>
 
           {/* Campaign Brief */}

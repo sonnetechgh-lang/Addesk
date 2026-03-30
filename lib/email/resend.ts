@@ -116,7 +116,7 @@ export async function sendCompletionEmail(
       html: htmlContent,
     })
 
-    console.log(`Completion email sent to ${clientEmail}`)
+    console.log('Completion email sent successfully')
     return { success: true, data }
   } catch (error) {
     console.error("Failed to send completion email:", error)

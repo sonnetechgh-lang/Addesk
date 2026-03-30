@@ -30,9 +30,6 @@ export async function POST(req: NextRequest) {
 
     if (hash !== signature) {
       console.error('Invalid Paystack Signature')
-      console.error('Expected hash:', hash)
-      console.error('Received signature:', signature)
-      console.error('Request body:', textBody.substring(0, 500))
       return NextResponse.json({ error: 'Invalid signature' }, { status: 401 })
     }
 
@@ -44,25 +41,30 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ received: true })
     }
 
+    // Security: payload is HMAC-verified above, fields are sanitized below, UUIDs validated, DB uses parameterized queries
     const { data } = event
-    console.log('Webhook event data:', JSON.stringify(data, null, 2))
+    console.log('Webhook event data received')
     
     const metadata = data.metadata || {}
-    const customFields = metadata.custom_fields || []
+    const customFields: Array<{ variable_name: string; value: string }> = Array.isArray(metadata.custom_fields) ? metadata.custom_fields : []
     
-    console.log('Metadata:', metadata)
-    console.log('Custom fields:', customFields)
-    
+    // Sanitize a string from external input: strip control characters to prevent log injection
+    const sanitize = (val: string) => val.replace(/[\x00-\x1f\x7f]/g, '')
+
     // Extract our custom fields defined in the checkout frontend
-    const getField = (variableName: string) => {
-      const field = customFields.find((f: { variable_name: string; value: string }) => f.variable_name === variableName)
-      return field ? field.value : null
+    const getField = (variableName: string): string | null => {
+      const field = customFields.find((f) => f.variable_name === variableName)
+      return field && typeof field.value === 'string' ? sanitize(field.value) : null
     }
 
     const influencerId = getField('influencer_id')
     const packageId = getField('package_id')
     const clientName = getField('client_name')
     const brief = getField('brief')
+    const clientPhone = getField('client_phone') || null
+    const clientInstagram = getField('client_instagram') || null
+    const clientTiktok = getField('client_tiktok') || null
+    const clientTwitter = getField('client_twitter') || null
 
     // Parse brief image URLs (stored as JSON string in metadata)
     let briefImageUrls: string[] = []
@@ -81,22 +83,22 @@ export async function POST(req: NextRequest) {
     const onPremiseDate = getField('on_premise_date') || null
     const onPremiseLocation = getField('on_premise_location') || null
 
-    console.log('Extracted values:', { influencerId, packageId, clientName, brief })
+    console.log('Extracted values:', { influencerId: !!influencerId, packageId: !!packageId, clientName: !!clientName })
 
     if (!influencerId || !packageId || !clientName) {
-      console.error('Webhook missing required explicit metadata', customFields)
-      return NextResponse.json({ error: 'Missing metadata', received: { influencerId, packageId, clientName } }, { status: 400 })
+      console.error('Webhook missing required explicit metadata')
+      return NextResponse.json({ error: 'Missing metadata' }, { status: 400 })
     }
 
     // Validate that influencerId is a valid UUID
     const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
     if (!uuidRegex.test(influencerId)) {
-      console.error('Invalid influencer_id format:', influencerId)
+      console.error('Invalid influencer_id format')
       return NextResponse.json({ error: 'Invalid influencer_id format' }, { status: 400 })
     }
     
     if (!uuidRegex.test(packageId)) {
-      console.error('Invalid package_id format:', packageId)
+      console.error('Invalid package_id format')
       return NextResponse.json({ error: 'Invalid package_id format' }, { status: 400 })
     }
 
@@ -105,7 +107,7 @@ export async function POST(req: NextRequest) {
     try {
       supabaseAdmin = createAdminClient()
     } catch (envError) {
-      console.error('CRITICAL: Failed to create admin Supabase client. Is SUPABASE_SERVICE_ROLE_KEY set?', envError instanceof Error ? envError.message : envError)
+      console.error('CRITICAL: Failed to create admin Supabase client. Is SUPABASE_SERVICE_ROLE_KEY set?', envError instanceof Error ? envError.message : String(envError))
       return NextResponse.json({ error: 'Server configuration error' }, { status: 500 })
     }
     
@@ -117,43 +119,51 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (pkgError || !pkg) {
-      console.error('Package not found:', packageId, pkgError)
+      console.error('Package not found for given ID', pkgError?.message)
       return NextResponse.json({ error: 'Package not found' }, { status: 400 })
     }
 
     // Verify the package belongs to the influencer
     if (pkg.influencer_id !== influencerId) {
-      console.error('Package does not belong to influencer:', { packageInfluencer: pkg.influencer_id, metadataInfluencer: influencerId })
+      console.error('Package does not belong to influencer')
       return NextResponse.json({ error: 'Package influencer mismatch' }, { status: 400 })
     }
+
+    // Sanitize reference and email from the webhook payload
+    const paystackRef = typeof data.reference === 'string' ? sanitize(data.reference) : String(data.reference)
+    const customerEmail = typeof data.customer?.email === 'string' ? sanitize(data.customer.email) : ''
     
     // Check if order already exists (idempotency check)
     const { data: existingOrder } = await supabaseAdmin
       .from('orders')
       .select('id')
-      .eq('paystack_reference', data.reference)
+      .eq('paystack_reference', paystackRef)
       .single()
 
     if (existingOrder) {
-      console.log(`Order with reference ${data.reference} already exists. Skipping.`)
+      console.log('Order with given reference already exists. Skipping.')
       return NextResponse.json({ received: true, orderId: existingOrder.id, message: 'Order already exists' })
     }
 
     // Paystack splits the money automatically. We calculate the platform fee simply to record it.
-    const amountInPesos = data.amount as number
+    const amountInPesos = Number(data.amount) || 0
     const platformFee = Math.round(amountInPesos * 0.06)
     const influencerAmount = amountInPesos - platformFee
 
     const { data: newOrder, error: insertError } = await supabaseAdmin
       .from('orders')
       .insert({
-        reference: data.reference,
-        paystack_reference: data.reference,
+        reference: paystackRef,
+        paystack_reference: paystackRef,
         package_id: packageId,
         influencer_id: influencerId,
         client_name: clientName,
         client_business_name: clientName, 
-        client_email: data.customer.email,
+        client_email: customerEmail,
+        client_phone: clientPhone,
+        client_instagram: clientInstagram,
+        client_tiktok: clientTiktok,
+        client_twitter: clientTwitter,
         product_description: brief || 'No brief provided', 
         amount: amountInPesos,
         platform_fee: platformFee,
@@ -171,11 +181,11 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (insertError) {
-      console.error('Failed to insert order from Webhook:', insertError)
+      console.error('Failed to insert order from Webhook:', insertError.message)
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
-    console.log(`Order ${newOrder.id} successfully created via webhook!`)
+    console.log('Order successfully created via webhook')
 
     // 4a. Create in-app notification for the influencer
     await supabaseAdmin
@@ -202,18 +212,18 @@ export async function POST(req: NextRequest) {
         profile.full_name,
         clientName,
         amountInPesos,
-        brief,
+        brief || 'No brief provided',
         newOrder.id
       )
-      console.log(`Notification email sent to ${profile.email}`)
+      console.log('Notification email sent to influencer')
     } else {
-      console.warn(`Could not send email. Profile ${influencerId} not found or missing email.`)
+      console.warn('Could not send email. Profile not found or missing email.')
     }
     
     return NextResponse.json({ received: true, orderId: newOrder.id })
     
   } catch (err) {
-    console.error('Webhook Error:', err)
+    console.error('Webhook Error:', err instanceof Error ? err.message : String(err))
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }

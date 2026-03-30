@@ -17,7 +17,7 @@ export async function getNotifications() {
     .limit(20)
 
   if (error) {
-    console.error('Failed to fetch notifications:', error)
+    console.error('Failed to fetch notifications:', error.message)
     return { notifications: [], unreadCount: 0 }
   }
 
@@ -39,7 +39,7 @@ export async function markNotificationRead(notificationId: string) {
     .eq('user_id', user.id)
 
   if (error) {
-    console.error('Failed to mark notification as read:', error)
+    console.error('Failed to mark notification as read:', error.message)
     return { error: 'Failed to update' }
   }
 
@@ -60,7 +60,7 @@ export async function markAllNotificationsRead() {
     .eq('is_read', false)
 
   if (error) {
-    console.error('Failed to mark all notifications as read:', error)
+    console.error('Failed to mark all notifications as read:', error.message)
     return { error: 'Failed to update' }
   }
 

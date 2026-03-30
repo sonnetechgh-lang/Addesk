@@ -49,7 +49,7 @@ export async function POST(request: Request) {
     const paystackData = await paystackRes.json()
 
     if (!paystackRes.ok || !paystackData.status) {
-      console.error('Paystack error:', paystackData)
+      console.error('Paystack error:', JSON.stringify(paystackData))
       return NextResponse.json(
         { error: 'Failed to create payment account. Please check your bank details and try again.' },
         { status: 400 }
@@ -58,23 +58,26 @@ export async function POST(request: Request) {
 
     const subaccountCode = paystackData.data.subaccount_code
 
-    // Update Supabase profile with the generated subaccount code
+    // Update Supabase profile with the generated subaccount code and payout details
     const { error: updateError } = await supabase
       .from('profiles')
       .update({
         paystack_subaccount_code: subaccountCode,
+        payout_bank_code: bankCode,
+        payout_account_number: accountNumber,
+        payout_account_name: accountName,
         is_onboarded: true,
       })
       .eq('id', user.id)
 
     if (updateError) {
-      console.error('Database update error:', updateError)
+      console.error('Database update error:', updateError.message)
       return NextResponse.json({ error: 'Account created but profile update failed. Please contact support.' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, subaccount_code: subaccountCode })
-  } catch (error: any) {
-    console.error('Subaccount creation unexpected error:', error)
+  } catch (error: unknown) {
+    console.error('Subaccount creation unexpected error:', error instanceof Error ? error.message : String(error))
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

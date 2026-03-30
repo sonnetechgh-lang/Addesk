@@ -72,8 +72,8 @@ export function PayoutStep({ onBack }: PayoutStepProps) {
       // If successful, they have fully onboarded!
       router.push('/dashboard')
       router.refresh()
-    } catch (err: any) {
-      setError(err.message)
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Failed to connect payout account')
     } finally {
       setIsLoading(false)
     }

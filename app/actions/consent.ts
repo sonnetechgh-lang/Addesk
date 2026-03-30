@@ -18,7 +18,7 @@ export async function acceptInfluencerTerms() {
 
   // Get request metadata
   const headersList = await headers()
-  const ip_address = headersList.get('x-forwarded-for') || 'unknown'
+  const ip_address = headersList.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
   const user_agent = headersList.get('user-agent') || 'unknown'
 
   // Insert consent log
@@ -33,12 +33,14 @@ export async function acceptInfluencerTerms() {
     })
 
   if (insertError) {
-    console.error('Failed to log consent:', insertError)
+    console.error('Failed to log consent:', insertError.message)
     return { success: false, error: 'Failed to record consent' }
   }
 
   // Fire-and-forget email — don't block the response
   if (user.email && resend) {
+    const safeDate = new Date().toUTCString()
+    const safeVersion = String(CURRENT_TERMS_VERSION).replace(/[<>&"']/g, '')
     resend.emails.send({
       from: 'AdDesk <no-reply@addesk.io>',
       to: user.email,
@@ -47,15 +49,14 @@ export async function acceptInfluencerTerms() {
         <div style="font-family: sans-serif; padding: 20px;">
           <h2>Terms of Service Accepted</h2>
           <p>Hi there,</p>
-          <p>This email confirms that you accepted the AdDesk Terms of Service (version ${CURRENT_TERMS_VERSION}) on ${new Date().toUTCString()}.</p>
-          <p>Your IP: ${ip_address}</p>
+          <p>This email confirms that you accepted the AdDesk Terms of Service (version ${safeVersion}) on ${safeDate}.</p>
           <p>If this wasn't you, please contact support immediately.</p>
           <br/>
           <p>The AdDesk Team</p>
         </div>
       `,
     }).catch((e) => {
-      console.error('Failed to send confirmation email', e)
+      console.error('Failed to send confirmation email', e instanceof Error ? e.message : String(e))
     })
   }
 
@@ -81,7 +82,7 @@ export async function logClientConsent(influencerId: string, clientEmail: string
     })
 
   if (insertError) {
-    console.error('Failed to log client consent:', insertError)
+    console.error('Failed to log client consent:', insertError.message)
     return { success: false, error: 'Failed to record consent' }
   }
 

@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { Loader2, User, Wallet, CheckCircle2, ShieldCheck, Camera, Trash2 } from 'lucide-react'
+import { Loader2, User, Wallet, CheckCircle2, ShieldCheck, Camera, Trash2, Building2 } from 'lucide-react'
 
 import { updateProfileSettings, updatePayoutSettings, uploadProfilePhoto, deleteProfilePhoto } from '@/actions/settings'
 import { Button } from '@/components/ui/button'
@@ -35,8 +35,22 @@ const payoutSchema = z.object({
   accountName: z.string().min(2, 'Account name is required'),
 })
 
+interface ProfileData {
+  full_name?: string
+  username?: string
+  bio?: string
+  instagram_handle?: string
+  tiktok_handle?: string
+  twitter_handle?: string
+  profile_photo_url?: string | null
+  payout_bank_code?: string
+  payout_account_number?: string
+  payout_account_name?: string
+  paystack_subaccount_code?: string
+}
+
 interface SettingsFormProps {
-  initialProfile: any
+  initialProfile: ProfileData
 }
 
 export function SettingsForm({ initialProfile }: SettingsFormProps) {
@@ -86,11 +100,13 @@ export function SettingsForm({ initialProfile }: SettingsFormProps) {
   const payoutForm = useForm<z.infer<typeof payoutSchema>>({
     resolver: zodResolver(payoutSchema),
     defaultValues: {
-      bankCode: '', // We don't have the existing bank code easily available from the profile unless we fetch it from Paystack
-      accountNumber: '',
-      accountName: '',
+      bankCode: initialProfile?.payout_bank_code || '',
+      accountNumber: initialProfile?.payout_account_number || '',
+      accountName: initialProfile?.payout_account_name || '',
     },
   })
+
+  const hasPayoutConnected = !!initialProfile?.paystack_subaccount_code && !!initialProfile?.payout_account_name
 
   async function onProfileSubmit(values: z.infer<typeof profileSchema>) {
     setIsProfileLoading(true)
@@ -114,7 +130,7 @@ export function SettingsForm({ initialProfile }: SettingsFormProps) {
         setProfileSuccess(true)
         setTimeout(() => setProfileSuccess(false), 5000)
       }
-    } catch (err: any) {
+    } catch {
       setProfileError('An unexpected error occurred.')
     } finally {
       setIsProfileLoading(false)
@@ -133,9 +149,10 @@ export function SettingsForm({ initialProfile }: SettingsFormProps) {
         setPayoutError(result.error)
       } else {
         setPayoutSuccess(true)
-        setTimeout(() => setPayoutSuccess(false), 5000)
+        // Reload to reflect the connected account card with saved details
+        window.location.reload()
       }
-    } catch (err: any) {
+    } catch {
       setPayoutError('An unexpected error occurred.')
     } finally {
       setIsPayoutLoading(false)
@@ -266,7 +283,7 @@ export function SettingsForm({ initialProfile }: SettingsFormProps) {
                   <FormItem>
                     <FormLabel className="text-xs font-bold text-text-muted uppercase tracking-wider">Bio</FormLabel>
                     <FormControl>
-                      <Textarea placeholder="Tell brands about yourself..." className="min-h-[120px] bg-surface-light border-border/60 resize-none pt-4" {...field} />
+                      <Textarea placeholder="Tell brands about yourself..." className="min-h-30 bg-surface-light border-border/60 resize-none pt-4" {...field} />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
@@ -348,7 +365,38 @@ export function SettingsForm({ initialProfile }: SettingsFormProps) {
 
         <div className="relative z-10">
           <h3 className="text-lg font-bold text-text-primary mb-1.5">Payout Details</h3>
-          <p className="text-text-secondary text-[14px] mb-7">Your connected Paystack account for receiving payments. <br/><span className="text-[11px] text-text-muted">Current Subaccount: {initialProfile?.paystack_subaccount_code}</span></p>
+          <p className="text-text-secondary text-[14px] mb-2">Your connected Paystack account for receiving payments.</p>
+
+          {/* Connected Account Card */}
+          {hasPayoutConnected && (
+            <div className="flex items-center gap-4 p-4 mb-7 bg-success/6 border border-success/20 rounded-xl">
+              <div className="h-11 w-11 rounded-xl overflow-hidden border-2 border-success/30 bg-surface-light flex items-center justify-center shrink-0">
+                {photoUrl ? (
+                  <img src={photoUrl} alt="Profile" className="h-full w-full object-cover" />
+                ) : (
+                  <span className="text-sm font-bold text-text-muted">
+                    {initialProfile?.full_name?.charAt(0) || '?'}
+                  </span>
+                )}
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="flex items-center gap-2">
+                  <p className="text-[13px] font-semibold text-text-primary truncate">{initialProfile.payout_account_name}</p>
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-success/12 text-success text-[10px] font-bold uppercase tracking-wider shrink-0">
+                    <CheckCircle2 className="h-3 w-3" /> Connected
+                  </span>
+                </div>
+                <div className="flex items-center gap-2 mt-0.5">
+                  <Building2 className="h-3 w-3 text-text-muted shrink-0" />
+                  <p className="text-[12px] text-text-muted truncate">
+                    {initialProfile.payout_bank_code} &middot; ****{initialProfile.payout_account_number?.slice(-4)}
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {!hasPayoutConnected && <div className="mb-7" />}
           
           <Form {...payoutForm}>
             <form onSubmit={payoutForm.handleSubmit(onPayoutSubmit)} className="space-y-6 max-w-xl">

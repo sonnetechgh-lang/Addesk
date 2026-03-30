@@ -63,7 +63,7 @@ export async function updateProfile(formData: FormData) {
     .eq('id', user.id)
 
   if (error) {
-    console.error('Update profile error:', error)
+    console.error('Update profile error:', error.message)
     return { error: 'Failed to update profile' }
   }
 
@@ -132,7 +132,7 @@ export async function createPackage(formData: FormData) {
     })
 
   if (error) {
-    console.error('Create package error:', error)
+    console.error('Create package error:', error.message)
     return { error: 'Failed to create package' }
   }
 
