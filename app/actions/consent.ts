@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { headers } from 'next/headers'
 import { Resend } from 'resend'
 import { CURRENT_TERMS_VERSION } from '@/lib/constants'
+import { sanitizeLog } from '@/lib/utils'
 
 const resendApiKey = process.env.RESEND_API_KEY
 const resend = resendApiKey ? new Resend(resendApiKey) : null
@@ -33,7 +34,7 @@ export async function acceptInfluencerTerms() {
     })
 
   if (insertError) {
-    console.error('Failed to log consent:', insertError.message)
+    console.error('Failed to log consent:', sanitizeLog(insertError.message))
     return { success: false, error: 'Failed to record consent' }
   }
 
@@ -56,7 +57,7 @@ export async function acceptInfluencerTerms() {
         </div>
       `,
     }).catch((e) => {
-      console.error('Failed to send confirmation email', e instanceof Error ? e.message : String(e))
+      console.error('Failed to send confirmation email', sanitizeLog(e instanceof Error ? e.message : String(e)))
     })
   }
 
@@ -82,7 +83,7 @@ export async function logClientConsent(influencerId: string, clientEmail: string
     })
 
   if (insertError) {
-    console.error('Failed to log client consent:', insertError.message)
+    console.error('Failed to log client consent:', sanitizeLog(insertError.message))
     return { success: false, error: 'Failed to record consent' }
   }
 

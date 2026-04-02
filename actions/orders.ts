@@ -4,6 +4,9 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendCompletionEmail } from '@/lib/email/resend'
 import { revalidatePath } from 'next/cache'
+import { sanitizeLog } from '@/lib/utils'
+
+const PUSH_SEND_URL = new URL('/api/push/send', process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').toString()
 
 const VALID_TRANSITIONS: Record<string, string[]> = {
   new: ['in_progress', 'cancelled'],
@@ -47,7 +50,7 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
     .eq('id', orderId)
 
   if (updateError) {
-    console.error('Failed to update order status:', updateError.message)
+    console.error('Failed to update order status:', sanitizeLog(updateError.message))
     return { error: 'Failed to update order status' }
   }
 
@@ -68,6 +71,18 @@ export async function updateOrderStatus(orderId: string, newStatus: string) {
       message: `"${packageTitle}" for ${order.client_name} ${statusLabel}.`,
       link: `/dashboard/orders/${orderId}`,
     })
+
+  // Send push notification for the status change
+  await fetch(PUSH_SEND_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      userId: user.id,
+      title: `Order ${newStatus === 'completed' ? 'Completed ✅' : newStatus === 'cancelled' ? 'Cancelled' : 'Updated'}`,
+      body: `"${packageTitle}" for ${order.client_name} ${statusLabel}.`,
+      url: `/dashboard/orders/${orderId}`,
+    }),
+  }).catch(() => { /* non-critical */ })
 
   // If marked as completed, send thank-you email to client
   if (newStatus === 'completed') {

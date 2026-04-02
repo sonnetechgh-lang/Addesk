@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { sanitizeLog } from '@/lib/utils'
 
 const profileSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -63,7 +64,7 @@ export async function updateProfileSettings(formData: FormData) {
     .eq('id', user.id)
 
   if (error) {
-    console.error('Update settings profile error:', error.message)
+    console.error('Update settings profile error:', sanitizeLog(error.message))
     return { error: 'Failed to update profile' }
   }
 
@@ -126,7 +127,7 @@ export async function updatePayoutSettings(rawValues: z.infer<typeof payoutSchem
     const paystackData = await paystackRes.json()
 
     if (!paystackRes.ok || !paystackData.status) {
-      console.error('Paystack subaccount error:', JSON.stringify(paystackData))
+      console.error('Paystack subaccount error:', sanitizeLog(JSON.stringify(paystackData)))
       return { error: 'Failed to update payment account. Please check your bank details and try again.' }
     }
 
@@ -148,14 +149,14 @@ export async function updatePayoutSettings(rawValues: z.infer<typeof payoutSchem
       .eq('id', user.id)
 
     if (updateError) {
-      console.error('Database subaccount update error:', updateError.message)
+      console.error('Database subaccount update error:', sanitizeLog(updateError.message))
       return { error: 'Paystack account updated, but failed to save details locally. Please contact support.' }
     }
     
     revalidatePath('/dashboard/settings')
     return { success: true }
   } catch (err: unknown) {
-    console.error('Payout update unexpected error:', err instanceof Error ? err.message : String(err))
+    console.error('Payout update unexpected error:', sanitizeLog(err instanceof Error ? err.message : String(err)))
     return { error: 'Internal server error' }
   }
 }
@@ -193,7 +194,7 @@ export async function uploadProfilePhoto(formData: FormData) {
     .upload(filePath, file, { upsert: true })
 
   if (uploadError) {
-    console.error('Avatar upload error:', uploadError.message)
+    console.error('Avatar upload error:', sanitizeLog(uploadError.message))
     return { error: 'Failed to upload image' }
   }
 
@@ -209,7 +210,7 @@ export async function uploadProfilePhoto(formData: FormData) {
     .eq('id', user.id)
 
   if (updateError) {
-    console.error('Profile photo URL update error:', updateError.message)
+    console.error('Profile photo URL update error:', sanitizeLog(updateError.message))
     return { error: 'Image uploaded but failed to update profile' }
   }
 
@@ -252,7 +253,7 @@ export async function deleteProfilePhoto() {
     .eq('id', user.id)
 
   if (updateError) {
-    console.error('Profile photo URL clear error:', updateError)
+    console.error('Profile photo URL clear error:', sanitizeLog(String(updateError)))
     return { error: 'Failed to remove profile photo' }
   }
 

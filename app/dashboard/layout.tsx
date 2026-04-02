@@ -3,6 +3,7 @@ import { LogOut, LayoutDashboard, Package, ShoppingCart, Settings } from "lucide
 import { createClient } from "@/lib/supabase/server"
 import { DashboardNav, MobileNav } from "@/components/dashboard/DashboardNav"
 import { NotificationBell } from "@/components/dashboard/NotificationBell"
+import { PushPermissionPrompt } from "@/components/dashboard/PushPermissionPrompt"
 import { CURRENT_TERMS_VERSION } from "@/lib/constants"
 import { redirect } from "next/navigation"
 
@@ -149,6 +150,8 @@ export default async function DashboardLayout({
 
       {/* ── Mobile Bottom Tab Bar ── */}
       <MobileNav />
+
+      <PushPermissionPrompt />
     </div>
   )
 }

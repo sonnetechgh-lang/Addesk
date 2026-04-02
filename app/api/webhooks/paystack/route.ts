@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import crypto from 'crypto'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { sendNewBookingEmail } from '@/lib/email/resend'
+import { sanitizeLog } from '@/lib/utils'
 
 const PAYSTACK_SECRET = process.env.PAYSTACK_SECRET_KEY || ''
+const PUSH_SEND_URL = new URL('/api/push/send', process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000').toString()
 
 export async function POST(req: NextRequest) {
   try {
@@ -119,7 +121,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (pkgError || !pkg) {
-      console.error('Package not found for given ID', pkgError?.message)
+      console.error('Package not found for given ID', sanitizeLog(pkgError?.message ?? ''))
       return NextResponse.json({ error: 'Package not found' }, { status: 400 })
     }
 
@@ -181,7 +183,7 @@ export async function POST(req: NextRequest) {
       .single()
 
     if (insertError) {
-      console.error('Failed to insert order from Webhook:', insertError.message)
+      console.error('Failed to insert order from Webhook:', sanitizeLog(insertError.message))
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
@@ -197,6 +199,18 @@ export async function POST(req: NextRequest) {
         message: `${clientName} just booked your service. Tap to view the order details.`,
         link: `/dashboard/orders/${newOrder.id}`,
       })
+
+    // 4b. Send push notification
+    await fetch(PUSH_SEND_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        userId: influencerId,
+        title: 'New Booking! 🎉',
+        body: `${clientName} just booked your service.`,
+        url: `/dashboard/orders/${newOrder.id}`,
+      }),
+    }).catch(() => { /* non-critical, don't fail the webhook */ })
     
     // 4b. Trigger Email Notification to Influencer
     // First, fetch the influencer's email
@@ -223,7 +237,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ received: true, orderId: newOrder.id })
     
   } catch (err) {
-    console.error('Webhook Error:', err instanceof Error ? err.message : String(err))
+    console.error('Webhook Error:', sanitizeLog(err instanceof Error ? err.message : String(err)))
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }

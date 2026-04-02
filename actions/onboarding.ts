@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { sanitizeLog } from '@/lib/utils'
 
 const profileSchema = z.object({
   fullName: z.string().min(2, 'Name must be at least 2 characters'),
@@ -63,7 +64,7 @@ export async function updateProfile(formData: FormData) {
     .eq('id', user.id)
 
   if (error) {
-    console.error('Update profile error:', error.message)
+    console.error('Update profile error:', sanitizeLog(error.message))
     return { error: 'Failed to update profile' }
   }
 
@@ -132,7 +133,7 @@ export async function createPackage(formData: FormData) {
     })
 
   if (error) {
-    console.error('Create package error:', error.message)
+    console.error('Create package error:', sanitizeLog(error.message))
     return { error: 'Failed to create package' }
   }
 

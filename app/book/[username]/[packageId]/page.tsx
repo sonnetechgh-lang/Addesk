@@ -13,6 +13,7 @@ import Image from 'next/image'
 
 import { logClientConsent } from '@/app/actions/consent'
 import { createClient } from '@/lib/supabase/client'
+import { sanitizeLog } from '@/lib/utils'
 import { Button } from '@/components/ui/button'
 import {
   Form,
@@ -229,7 +230,7 @@ export default function CheckoutPage({ params }: CheckoutPageProps) {
         .upload(filePath, file, { upsert: false })
 
       if (uploadError) {
-        console.error('Brief image upload error:', uploadError)
+        console.error('Brief image upload error:', sanitizeLog(uploadError.message))
         throw new Error(`Failed to upload image ${i + 1}: ${uploadError.message}`)
       }
 

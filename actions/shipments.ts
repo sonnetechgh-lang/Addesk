@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { sanitizeLog } from '@/lib/utils'
 
 // ── Shipment creation schema ──
 const createShipmentSchema = z.object({
@@ -66,7 +67,7 @@ export async function createShipment(formData: FormData) {
     })
 
   if (insertErr) {
-    console.error('Create shipment error:', insertErr.message)
+    console.error('Create shipment error:', sanitizeLog(insertErr.message))
     return { error: 'Failed to create shipment record' }
   }
 
@@ -121,7 +122,7 @@ export async function updateShipmentStatus(formData: FormData) {
     .eq('id', orderId)
 
   if (error) {
-    console.error('Update shipment status error:', error.message)
+    console.error('Update shipment status error:', sanitizeLog(error.message))
     return { error: 'Failed to update status' }
   }
 

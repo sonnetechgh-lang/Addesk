@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { z } from 'zod'
+import { sanitizeLog } from '@/lib/utils'
 
 const subaccountSchema = z.object({
   bankCode: z.string().min(3, 'Bank code is required').max(10),
@@ -49,7 +50,7 @@ export async function POST(request: Request) {
     const paystackData = await paystackRes.json()
 
     if (!paystackRes.ok || !paystackData.status) {
-      console.error('Paystack error:', JSON.stringify(paystackData))
+      console.error('Paystack error:', sanitizeLog(JSON.stringify(paystackData)))
       return NextResponse.json(
         { error: 'Failed to create payment account. Please check your bank details and try again.' },
         { status: 400 }
@@ -71,13 +72,13 @@ export async function POST(request: Request) {
       .eq('id', user.id)
 
     if (updateError) {
-      console.error('Database update error:', updateError.message)
+      console.error('Database update error:', sanitizeLog(updateError.message))
       return NextResponse.json({ error: 'Account created but profile update failed. Please contact support.' }, { status: 500 })
     }
 
     return NextResponse.json({ success: true, subaccount_code: subaccountCode })
   } catch (error: unknown) {
-    console.error('Subaccount creation unexpected error:', error instanceof Error ? error.message : String(error))
+    console.error('Subaccount creation unexpected error:', sanitizeLog(error instanceof Error ? error.message : String(error)))
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
