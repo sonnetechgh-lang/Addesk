@@ -79,7 +79,7 @@ Vercel auto-detects Next.js. Verify these settings on the import screen:
 | **Install Command**  | `npm install --legacy-peer-deps`   |
 | **Output Directory** | `.next` (leave default)            |
 
-> **Why `--legacy-peer-deps`?** The project has a `prebuild` script using this flag to resolve peer dependency conflicts between React 19 and some packages. Without it, the install step will fail.
+> **Why `--legacy-peer-deps`?** The project requires this flag to resolve peer dependency conflicts between React 19 and some packages. Without it, the install step will fail.
 
 ---
 
