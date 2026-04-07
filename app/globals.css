@@ -27,8 +27,8 @@
   /* --- Text --- */
   --text-primary: #1d1d1f; /* Apple label */
   --text-secondary: #6e6e73; /* Apple secondary label */
-  --text-tertiary: #86868b; /* Apple tertiary label */
-  --text-muted: #aeaeb2; /* Apple tertiary label */
+  --text-tertiary: #6e6e73; /* Apple tertiary label — WCAG AA compliant */
+  --text-muted: #8e8e93;    /* Apple quaternary label — WCAG AA compliant */
   --text-inverse: #ffffff;
 
   /* --- Borders --- */
@@ -347,34 +347,42 @@ body {
 /* Animation Utilities */
 .animate-fade-in-up {
   animation: fadeInUp 0.4s ease forwards;
+  will-change: transform, opacity;
 }
 
 .animate-fade-in {
   animation: fadeIn 0.3s ease forwards;
+  will-change: opacity;
 }
 
 .animate-slide-in-down {
   animation: slideInDown 0.3s ease forwards;
+  will-change: transform, opacity;
 }
 
 .animate-slide-in-up {
   animation: slideInUp 0.3s ease forwards;
+  will-change: transform, opacity;
 }
 
 .animate-slide-in-left {
   animation: slideInLeft 0.3s ease forwards;
+  will-change: transform, opacity;
 }
 
 .animate-slide-in-right {
   animation: slideInRight 0.3s ease forwards;
+  will-change: transform, opacity;
 }
 
 .animate-scale-in {
   animation: scaleIn 0.3s ease forwards;
+  will-change: transform, opacity;
 }
 
 .animate-scale-down {
   animation: scaleDown 0.2s ease forwards;
+  will-change: transform, opacity;
 }
 
 .animate-pulse-soft {
@@ -557,6 +565,18 @@ body {
 /* Scroll behavior */
 .scroll-smooth-y {
   scroll-behavior: smooth;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 /* Selection Styling */

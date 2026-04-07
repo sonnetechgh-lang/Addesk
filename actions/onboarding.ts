@@ -6,12 +6,12 @@ import { z } from 'zod'
 import { sanitizeLog } from '@/lib/utils'
 
 const profileSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  username: z.string().min(3, 'Username must be at least 3 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
+  username: z.string().min(3, 'Username must be at least 3 characters').max(30, 'Username is too long').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
-  instagramHandle: z.string().optional(),
-  tiktokHandle: z.string().optional(),
-  twitterHandle: z.string().optional(),
+  instagramHandle: z.string().max(50, 'Handle is too long').optional(),
+  tiktokHandle: z.string().max(50, 'Handle is too long').optional(),
+  twitterHandle: z.string().max(50, 'Handle is too long').optional(),
 })
 
 export async function updateProfile(formData: FormData) {
@@ -48,7 +48,7 @@ export async function updateProfile(formData: FormData) {
     .single()
 
   if (existingUser) {
-    return { error: 'Username is already taken' }
+    return { error: 'This username is not available. Please try a different one.' }
   }
 
   const { error } = await supabase
@@ -73,10 +73,10 @@ export async function updateProfile(formData: FormData) {
 }
 
 const packageSchema = z.object({
-  title: z.string().min(3, 'Title is required'),
-  description: z.string().optional(),
+  title: z.string().min(3, 'Title is required').max(100, 'Title is too long'),
+  description: z.string().max(1000, 'Description is too long').optional(),
   priceGHS: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 1, 'Price must be at least 1 GHS'),
-  deliveryDays: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 1, 'Delivery time must be at least 1 day'),
+  deliveryDays: z.string().refine((val) => !isNaN(Number(val)) && Number(val) >= 1 && Number(val) <= 365, 'Delivery time must be 1–365 days'),
 })
 
 export async function createPackage(formData: FormData) {

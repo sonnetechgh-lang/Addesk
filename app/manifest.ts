@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
   return {
     name: 'AdDesk',
     short_name: 'AdDesk',
-    description: 'Influencer Booking and Monetization',
+    description: 'Advertising Workflow & Management',
     start_url: '/dashboard',
     display: 'standalone',
     orientation: 'portrait',

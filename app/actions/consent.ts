@@ -9,6 +9,11 @@ import { sanitizeLog } from '@/lib/utils'
 const resendApiKey = process.env.RESEND_API_KEY
 const resend = resendApiKey ? new Resend(resendApiKey) : null
 
+export async function acceptTerms() {
+  return acceptInfluencerTerms()
+}
+
+/** @deprecated Use acceptTerms() instead */
 export async function acceptInfluencerTerms() {
   const supabase = await createClient()
   const { data: { user }, error: authError } = await supabase.auth.getUser()

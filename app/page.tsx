@@ -8,13 +8,14 @@ import {
   Layers,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { LogoMark } from "@/components/ui/logo";
 
 export default function Home() {
   return (
     <div className="flex flex-col min-h-screen font-sans bg-surface-light text-text-primary selection:bg-brand-success/30 overflow-hidden relative">
       
       {/* ── BACKGROUND PATTERN ── */}
-      <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[20px_20px] opacity-40 pointer-events-none" />
+      <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] bg-size-[20px_20px] opacity-40 pointer-events-none" aria-hidden="true" />
 
       {/* ── HEADER ── */}
       <header className="fixed top-0 z-50 w-full h-20 flex items-center px-6 lg:px-12 bg-surface-card/70 backdrop-blur-xl border-b border-border shadow-sm">
@@ -22,12 +23,7 @@ export default function Home() {
           href="/"
           className="flex items-center gap-2.5 font-bold text-xl tracking-tight text-text-primary group hover:opacity-80 transition-opacity"
         >
-          <div className="grid grid-cols-2 gap-0.5 w-6 h-6 items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-success" />
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
-          </div>
+          <LogoMark />
           <span>AdDesk</span>
         </Link>
 
@@ -52,21 +48,16 @@ export default function Home() {
           {/* Main Content */}
           <div className="relative z-10 max-w-4xl mx-auto flex flex-col items-center text-center mt-12 sm:mt-24 animate-fade-in-up">
              <div className="w-16 h-16 rounded-3xl bg-surface-card shadow-md border border-border flex items-center justify-center mb-8 hover:scale-110 transition-transform cursor-default">
-               <div className="grid grid-cols-2 gap-0.75 w-8 h-8 items-center justify-center">
-                 <div className="w-3.5 h-3.5 rounded-full bg-brand-success" />
-                 <div className="w-3.5 h-3.5 rounded-full bg-brand-secondary" />
-                 <div className="w-3.5 h-3.5 rounded-full bg-brand-secondary" />
-                 <div className="w-3.5 h-3.5 rounded-full bg-brand-secondary" />
-               </div>
+               <LogoMark size="lg" />
              </div>
 
-            <h1 className="font-sans font-bold text-5xl sm:text-6xl lg:text-7xl leading-[1.1] tracking-tight mb-6 text-text-primary max-w-3xl">
+            <h1 className="font-sans font-bold text-4xl sm:text-5xl md:text-6xl lg:text-7xl leading-[1.1] tracking-tight mb-6 text-text-primary max-w-3xl">
               Monetize, plan, and track{" "}
               <span className="bg-linear-to-r from-brand-success to-brand-success-light bg-clip-text text-transparent">all in one place</span>
             </h1>
 
             <p className="text-lg sm:text-xl text-text-secondary max-w-2xl mx-auto leading-relaxed mb-10 pb-2">
-              Efficiently manage your creative ad tasks, organize briefs, and boost productivity with instant Paystack payments.
+              Efficiently manage your creative ad tasks, organize briefs, and boost productivity with instant payments.
             </p>
 
             {/* CTA */}
@@ -262,12 +253,7 @@ export default function Home() {
       <footer className="w-full py-12 border-t border-border bg-surface-light">
         <div className="container px-6 max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
           <div className="flex items-center gap-3">
-             <div className="grid grid-cols-2 gap-0.5 w-5 h-5 items-center justify-center">
-               <div className="w-2 h-2 rounded-full bg-brand-success" />
-               <div className="w-2 h-2 rounded-full bg-brand-secondary" />
-               <div className="w-2 h-2 rounded-full bg-brand-secondary" />
-               <div className="w-2 h-2 rounded-full bg-brand-secondary" />
-             </div>
+             <LogoMark size="sm" />
             <span className="font-bold text-lg text-text-primary">AdDesk</span>
           </div>
 

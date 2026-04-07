@@ -14,6 +14,7 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
         ref={ref}
         type={type}
         disabled={disabled}
+        aria-invalid={error || undefined}
         data-slot="input"
         className={cn(
           "flex h-11 w-full rounded-lg border bg-surface-card px-4 py-2.5 text-[15px] text-text-primary placeholder:text-text-muted",
@@ -24,8 +25,8 @@ const Input = React.forwardRef<HTMLInputElement, InputProps>(
           "file:border-0 file:bg-transparent file:text-sm file:font-medium",
           // Default state
           !error && !success && "border-border focus:border-brand-primary focus:ring-brand-primary/20",
-          // Error state
-          error && "border-error focus:border-error focus:ring-error/20 bg-error/5",
+          // Error state — enhanced visibility
+          error && "border-error focus:border-error focus:ring-error/30 bg-error/10",
           // Success state
           success && "border-success focus:border-success focus:ring-success/20",
           className

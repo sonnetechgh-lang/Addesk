@@ -3,6 +3,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Package, Wallet, Activity, Eye } from "lucide-react"
 import { ShareLink } from '@/components/dashboard/ShareLink'
+import { getLabel } from '@/types/roles'
+import type { OrganizationType } from '@/types/roles'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -14,12 +16,34 @@ export default async function DashboardPage() {
     .eq('id', user?.id)
     .single()
 
-  // Fetch ALL orders to calculate lifetime stats correctly
-  const { data: orders } = await supabase
+  const currentOrgId = profile?.current_organization_id
+
+  // Fetch memberships to get the current org type for labels
+  const { data: memberships } = await supabase
+    .from('organization_members')
+    .select('role, organizations(type)')
+    .eq('user_id', user?.id)
+    .eq('organization_id', currentOrgId)
+    .eq('is_active', true)
+    .single()
+
+  const orgType = (memberships?.organizations as any)?.type as OrganizationType || 'influencer'
+  const greetingLabel = getLabel('greeting', orgType)
+
+  // Fetch orders scoped to the CURRENT organization
+  let query = supabase
     .from('orders')
     .select('*, packages(title)')
-    .eq('influencer_id', user?.id)
     .order('created_at', { ascending: false })
+
+  if (currentOrgId) {
+    query = query.eq('organization_id', currentOrgId)
+  } else {
+    // Fallback for solo creators not yet linked to an org
+    query = query.eq('influencer_id', user?.id)
+  }
+
+  const { data: orders } = await query
 
   const totalOrders = orders?.length || 0
   const completedCount = orders?.filter(o => o.order_status === 'completed').length || 0
@@ -31,7 +55,7 @@ export default async function DashboardPage() {
     completedOrders: completedCount,
   }
 
-  // Fetch profile view count
+  // Fetch profile view count (still profile-specific for now)
   const { count: profileViewCount } = await supabase
     .from('profile_views')
     .select('*', { count: 'exact', head: true })

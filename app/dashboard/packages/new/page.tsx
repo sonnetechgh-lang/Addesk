@@ -122,7 +122,7 @@ export default function NewPackagePage() {
                   <FormControl>
                     <Textarea 
                       placeholder="Describe exactly what the brand receives (usage rights, revisions, video length, etc.)."
-                      className="resize-none min-h-[160px] bg-surface-light border-border/60 focus:ring-brand-success/20 rounded-xl pt-4"
+                      className="resize-none min-h-40 bg-surface-light border-border/60 focus:ring-brand-success/20 rounded-xl pt-4"
                       {...field}
                     />
                   </FormControl>

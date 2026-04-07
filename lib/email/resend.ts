@@ -10,10 +10,10 @@ function escapeHtml(str: string): string {
     .replace(/'/g, '&#39;')
 }
 
-// Helper to send a clean transactional email to the Influencer when a new booking arrives
+// Helper to send a clean transactional email to the vendor when a new booking arrives
 export async function sendNewBookingEmail(
   toEmail: string, 
-  influencerName: string, 
+  vendorName: string, 
   clientName: string, 
   amountPesewas: number, 
   brief: string,
@@ -30,7 +30,7 @@ export async function sendNewBookingEmail(
   const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://addesk.com'
   const fromAddress = process.env.EMAIL_FROM_ADDRESS || 'AdDesk Bookings <bookings@updates.addesk.com>'
 
-  const safeInfluencer = escapeHtml(influencerName)
+  const safeInfluencer = escapeHtml(vendorName)
   const safeClient = escapeHtml(clientName)
   const safeBrief = escapeHtml(brief || 'No brief provided')
 
@@ -68,11 +68,11 @@ export async function sendNewBookingEmail(
   }
 }
 
-// Send a thank-you email to the client when the influencer marks an order as completed
+// Send a thank-you email to the client when the vendor marks an order as completed
 export async function sendCompletionEmail(
   clientEmail: string,
   clientName: string,
-  influencerName: string,
+  vendorName: string,
   packageTitle: string,
   amountPesewas: number
 ) {
@@ -86,7 +86,7 @@ export async function sendCompletionEmail(
   const fromAddress = process.env.EMAIL_FROM_ADDRESS || 'AdDesk <bookings@updates.addesk.com>'
 
   const safeClient = escapeHtml(clientName)
-  const safeInfluencer = escapeHtml(influencerName)
+  const safeInfluencer = escapeHtml(vendorName)
   const safePackage = escapeHtml(packageTitle)
 
   const htmlContent = `

@@ -6,12 +6,12 @@ import { z } from 'zod'
 import { sanitizeLog } from '@/lib/utils'
 
 const profileSchema = z.object({
-  fullName: z.string().min(2, 'Name must be at least 2 characters'),
-  username: z.string().min(3, 'Username must be at least 3 characters').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
+  fullName: z.string().min(2, 'Name must be at least 2 characters').max(100, 'Name is too long'),
+  username: z.string().min(3, 'Username must be at least 3 characters').max(30, 'Username is too long').regex(/^[a-zA-Z0-9_]+$/, 'Username can only contain letters, numbers, and underscores'),
   bio: z.string().max(500, 'Bio must be less than 500 characters').optional(),
-  instagramHandle: z.string().optional(),
-  tiktokHandle: z.string().optional(),
-  twitterHandle: z.string().optional(),
+  instagramHandle: z.string().max(50, 'Handle is too long').optional(),
+  tiktokHandle: z.string().max(50, 'Handle is too long').optional(),
+  twitterHandle: z.string().max(50, 'Handle is too long').optional(),
 })
 
 export async function updateProfileSettings(formData: FormData) {
@@ -48,7 +48,7 @@ export async function updateProfileSettings(formData: FormData) {
     .single()
 
   if (existingUser) {
-    return { error: 'Username is already taken' }
+    return { error: 'This username is not available. Please try a different one.' }
   }
 
   const { error } = await supabase
@@ -73,9 +73,9 @@ export async function updateProfileSettings(formData: FormData) {
 }
 
 const payoutSchema = z.object({
-  bankCode: z.string().min(3, 'Bank code is required'),
-  accountNumber: z.string().min(10, 'Account number is too short'),
-  accountName: z.string().min(2, 'Account name is required'),
+  bankCode: z.string().min(3, 'Bank code is required').max(20, 'Bank code is too long'),
+  accountNumber: z.string().min(10, 'Account number is too short').max(20, 'Account number is too long'),
+  accountName: z.string().min(2, 'Account name is required').max(100, 'Account name is too long'),
 })
 
 export async function updatePayoutSettings(rawValues: z.infer<typeof payoutSchema>) {

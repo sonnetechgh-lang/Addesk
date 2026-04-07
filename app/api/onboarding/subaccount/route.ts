@@ -43,7 +43,7 @@ export async function POST(request: Request) {
         settlement_bank: bankCode,
         account_number: accountNumber,
         percentage_charge: Number(process.env.PLATFORM_PERCENTAGE_CHARGE) || 6,
-        description: `Subaccount for Influencer ${user.id}`,
+        description: `Subaccount for AdDesk vendor ${user.id}`,
       }),
     })
 

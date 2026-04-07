@@ -39,3 +39,19 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# Agent & Skill files
+.agents/
+.roo/
+.github/skills/
+skills-lock.json
+
+# IDEs
+.vscode/
+.idea/
+
+# Temporary / Logs
+*.log
+_archive/
+docs/_archive/
+addesk-temp/

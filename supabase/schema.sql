@@ -106,11 +106,29 @@ create table public.orders (
 alter table public.orders enable row level security;
 
 -- RLS Policies for Orders
--- Influencers can view their own orders
+-- Organization members can view orders belonging to their organization
+create policy "Org members can view org orders." 
+  on orders for select using (
+    organization_id in (
+      select organization_id from organization_members
+      where user_id = auth.uid() and is_active = true
+    )
+  );
+
+-- Organization members can update orders in their organization (based on role)
+create policy "Org members can update org orders." 
+  on orders for update using (
+    organization_id in (
+      select organization_id from organization_members
+      where user_id = auth.uid() and is_active = true
+      and role in ('owner', 'admin', 'production')
+    )
+  );
+
+-- Backward compatibility: influencers can still see their own orders even if not linked to an org
 create policy "Influencers can view their own orders." 
   on orders for select using (auth.uid() = influencer_id);
 
--- Influencers can update their own orders (specifically status and notes)
 create policy "Influencers can update their own orders." 
   on orders for update using (auth.uid() = influencer_id);
 
@@ -134,36 +152,50 @@ on conflict do nothing;
 create policy "Avatar images are publicly accessible." 
   on storage.objects for select using (bucket_id = 'avatars');
 
-create policy "Anyone can upload an avatar." 
-  on storage.objects for insert with check (bucket_id = 'avatars');
+create policy "Authenticated users can upload an avatar." 
+  on storage.objects for insert with check (bucket_id = 'avatars' and auth.role() = 'authenticated');
 
 -- Storage RLS: Orders (Client Uploads via public form)
 create policy "Order assets are publicly accessible." 
   on storage.objects for select using (bucket_id = 'orders');
 
-create policy "Anyone can upload order assets." 
-  on storage.objects for insert with check (bucket_id = 'orders');
+create policy "Authenticated users can upload order assets." 
+  on storage.objects for insert with check (bucket_id = 'orders' and auth.role() = 'authenticated');
 
 -- Storage RLS: Brief Assets (Client Uploads via public checkout)
 create policy "Brief assets are publicly accessible." 
   on storage.objects for select using (bucket_id = 'brief-assets');
 
-create policy "Anyone can upload brief assets." 
-  on storage.objects for insert with check (bucket_id = 'brief-assets');
+create policy "Authenticated users can upload brief assets." 
+  on storage.objects for insert with check (bucket_id = 'brief-assets' and auth.role() = 'authenticated');
 
 
 -- 5. Trigger for new auth users
 -- When a user signs up, automatically create a row in the profiles table
 create or replace function public.handle_new_user() 
 returns trigger as $$
+declare
+  raw_name text;
+  clean_name text;
+  fallback_name text;
 begin
+  raw_name := new.raw_user_meta_data->>'full_name';
+  
+  if raw_name is null or raw_name = '' then
+    -- Fallback: use part of email before @
+    fallback_name := split_part(new.email, '@', 1);
+    clean_name := lower(regexp_replace(fallback_name, '[^a-zA-Z0-9]+', '', 'g'));
+  else
+    clean_name := lower(regexp_replace(raw_name, '\s+', '', 'g'));
+  end if;
+
   insert into public.profiles (id, full_name, email, username)
   values (
     new.id, 
-    new.raw_user_meta_data->>'full_name', 
+    coalesce(raw_name, split_part(new.email, '@', 1)), 
     new.email,
     -- Simple slugification for initial username, can be changed during onboarding
-    lower(regexp_replace(new.raw_user_meta_data->>'full_name', '\s+', '', 'g')) || '_' || substr(md5(random()::text), 1, 4)
+    clean_name || '_' || substr(md5(random()::text), 1, 4)
   );
   return new;
 end;

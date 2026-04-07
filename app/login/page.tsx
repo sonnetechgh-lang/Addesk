@@ -6,11 +6,11 @@ import Link from 'next/link'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { useForm } from 'react-hook-form'
 import * as z from 'zod'
-import { Loader2 } from 'lucide-react'
 import type { AuthError } from '@supabase/supabase-js'
 
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
+import { LogoMark } from '@/components/ui/logo'
 import {
   Form,
   FormControl,
@@ -63,19 +63,14 @@ export default function LoginPage() {
       {/* ── Left Panel ── */}
       <div className="hidden lg:flex w-[45%] bg-brand-secondary flex-col justify-between p-12 relative overflow-hidden">
         {/* Glow orbs */}
-        <div className="absolute top-[-15%] left-[-15%] w-[60%] h-[60%] rounded-full bg-brand-success blur-[100px] opacity-25 pointer-events-none" />
-        <div className="absolute bottom-[-20%] right-[-10%] w-[55%] h-[55%] rounded-full bg-brand-accent blur-[100px] opacity-15 pointer-events-none" />
+        <div className="absolute top-[-15%] left-[-15%] w-[60%] h-[60%] rounded-full bg-brand-success blur-[100px] opacity-25 pointer-events-none" aria-hidden="true" />
+        <div className="absolute bottom-[-20%] right-[-10%] w-[55%] h-[55%] rounded-full bg-brand-accent blur-[100px] opacity-15 pointer-events-none" aria-hidden="true" />
         {/* Dot grid */}
-        <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none" />
+        <div className="absolute inset-0 dot-grid opacity-30 pointer-events-none" aria-hidden="true" />
 
         {/* Logo */}
         <Link href="/" className="relative z-10 flex items-center gap-2.5">
-          <div className="grid grid-cols-2 gap-0.5 w-6 h-6 items-center justify-center">
-            <div className="w-2.5 h-2.5 rounded-full bg-brand-success" />
-            <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
-            <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
-            <div className="w-2.5 h-2.5 rounded-full bg-white/40" />
-          </div>
+          <LogoMark variant="dark" />
           <span className="font-bold text-lg text-white tracking-tight">AdDesk</span>
         </Link>
 
@@ -111,12 +106,7 @@ export default function LoginPage() {
 
           {/* Mobile logo */}
           <Link href="/" className="lg:hidden flex items-center gap-2 mb-10 justify-center">
-            <div className="grid grid-cols-2 gap-0.5 w-6 h-6 items-center justify-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-brand-success" />
-              <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
-              <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
-              <div className="w-2.5 h-2.5 rounded-full bg-brand-secondary" />
-            </div>
+            <LogoMark />
             <span className="font-bold text-xl text-text-primary">AdDesk</span>
           </Link>
 
@@ -162,15 +152,8 @@ export default function LoginPage() {
                   </div>
                 )}
 
-                <Button type="submit" className="w-full mt-1" disabled={isLoading}>
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Signing in...
-                    </>
-                  ) : (
-                    'Sign In'
-                  )}
+                <Button type="submit" className="w-full mt-1" isLoading={isLoading} loadingText="Signing in..." disabled={isLoading}>
+                  Sign In
                 </Button>
               </form>
             </Form>

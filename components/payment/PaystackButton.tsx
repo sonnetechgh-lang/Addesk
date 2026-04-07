@@ -83,8 +83,9 @@ export default function PaystackButton({
 
   useEffect(() => {
     setIsMounted(true)
-    const rand = crypto.getRandomValues(new Uint32Array(1))[0]
-    setTxReference(`ORD-${Date.now()}-${rand}`)
+    const rand = crypto.getRandomValues(new Uint8Array(16))
+    const randHex = Array.from(rand).map(b => b.toString(16).padStart(2, '0')).join('')
+    setTxReference(`ORD-${Date.now()}-${randHex}`)
   }, [])
 
   const config: PaystackConfig = {

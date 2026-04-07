@@ -125,15 +125,29 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Package not found' }, { status: 400 })
     }
 
-    // Verify the package belongs to the influencer
+    // Verify the package belongs to the vendor
     if (pkg.influencer_id !== influencerId) {
-      console.error('Package does not belong to influencer')
-      return NextResponse.json({ error: 'Package influencer mismatch' }, { status: 400 })
+      console.error('Package does not belong to vendor')
+      return NextResponse.json({ error: 'Package vendor mismatch' }, { status: 400 })
     }
 
     // Sanitize reference and email from the webhook payload
     const paystackRef = typeof data.reference === 'string' ? sanitize(data.reference) : String(data.reference)
-    const customerEmail = typeof data.customer?.email === 'string' ? sanitize(data.customer.email) : ''
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    const customerEmail = typeof data.customer?.email === 'string' && emailRegex.test(data.customer.email)
+      ? sanitize(data.customer.email)
+      : ''
+    
+    // Replay protection: reject events older than 5 minutes
+    const eventCreatedAt = data.paid_at || data.created_at
+    if (eventCreatedAt) {
+      const eventAge = Date.now() - new Date(eventCreatedAt).getTime()
+      const FIVE_MINUTES = 5 * 60 * 1000
+      if (eventAge > FIVE_MINUTES) {
+        console.warn('Rejecting stale webhook event:', sanitizeLog(paystackRef))
+        return NextResponse.json({ received: true, message: 'Event too old, skipping' })
+      }
+    }
     
     // Check if order already exists (idempotency check)
     const { data: existingOrder } = await supabaseAdmin
@@ -229,7 +243,7 @@ export async function POST(req: NextRequest) {
         brief || 'No brief provided',
         newOrder.id
       )
-      console.log('Notification email sent to influencer')
+      console.log('Notification email sent to vendor')
     } else {
       console.warn('Could not send email. Profile not found or missing email.')
     }

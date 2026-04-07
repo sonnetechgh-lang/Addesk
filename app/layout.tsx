@@ -19,7 +19,7 @@ const jetbrainsMono = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: "AdDesk",
-  description: "Influencer Booking and Monetization",
+  description: "Advertising Workflow & Management",
   manifest: '/manifest.json',
   appleWebApp: {
     capable: true,

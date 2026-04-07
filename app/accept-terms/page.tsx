@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { ShieldCheck, ArrowRight, Loader2, AlertCircle } from "lucide-react"
-import { acceptInfluencerTerms } from "@/app/actions/consent"
+import { acceptTerms } from "@/app/actions/consent"
 import Link from "next/link"
 
 export default function AcceptTermsPage() {
@@ -22,7 +22,7 @@ export default function AcceptTermsPage() {
     setError("")
 
     try {
-      const result = await acceptInfluencerTerms()
+      const result = await acceptTerms()
       if (result.success) {
         router.push("/dashboard")
         router.refresh()
